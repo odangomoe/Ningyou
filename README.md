@@ -1,2 +1,2 @@
 # Ningyou
-The puppet files to setup your own Odango.moe instance
+The Ansible files to setup your own Odango.moe instance
