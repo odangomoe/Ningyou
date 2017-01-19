@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: localhost
   vars:
     ipv6_prefix: '2a01:7c8:c020:2::3:'
     timezone: 'Europe/Amsterdam'
@@ -21,38 +21,55 @@
     xbps: name=unbound state=present
   - name: install cronie
     xbps: name=cronie state=present
+  - name: install mariadb
+    xbps: name=mariadb state=present
+  - name: install zip
+    xbps: name=zip state=present
   - name: fix php.ini
     lineinfile:
-      path: /etc/php/php.ini
-      regex: '^;?open_basedir'
+      dest: /etc/php/php.ini
+      regexp: '^;?open_basedir'
       line: 'open_basedir = /'
   - lineinfile:
-      path: /etc/php/php.ini
-      regex: '^;?extension=phar\.so'
+      dest: /etc/php/php.ini
+      regexp: '^;?extension=phar\.so'
       line: 'extension=phar.so'
   - lineinfile:
-      path: /etc/php/php.ini
-      regex: '^;?date.timezone='
+      dest: /etc/php/php.ini
+      regexp: '^;?extension=zip\.so'
+      line: 'extension=zip.so'
+  - lineinfile:
+      dest: /etc/php/php.ini
+      regexp: '^;?date.timezone='
       line: 'date.timezone={{ timezone }}'
   - lineinfile:
-      path: /etc/php/php.ini
-      regex: '^;?extension=pdo_mysql\.so'
+      dest: /etc/php/php.ini
+      regexp: '^;?extension=pdo_mysql\.so'
       line: 'extension=pdo_mysql.so'
+  - lineinfile:
+      dest: /etc/php/php.ini
+      regexp: '^;?extension=openssl\.so'
+      line: 'extension=openssl.so'
   - name: install composer
-    shell: curl -O- https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+    shell: curl -o- https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
   - file:
       path: /usr/bin/composer
       mode: a+x
   - name: enabling unbound service
     file:
       state: link
-      path: /etc/sv/unbound
+      src: /etc/sv/unbound
       dest: /var/service/unbound
   - name: enabling crond service
     file:
       state: link
-      path: /etc/sv/crond
+      src: /etc/sv/crond
       dest: /var/service/crond
+  - name: enabling mariadb service
+    file:
+      state: link
+      src: /etc/sv/mysqld
+      dest: /var/service/mysqld
   - file: path=/opt/hebi state=directory
   - git: repo="https://github.com/odangomoe/Hebi.git" dest="/opt/hebi" clone=yes update=yes
     notify: hebi update
