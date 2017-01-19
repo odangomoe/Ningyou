@@ -8,71 +8,73 @@
   become_user: root
 
   tasks:
-    - xbps: upgrade=yes
-    - name: install nodejs
-      xbps: name=nodejs state=present
-    - name: install php
-      xbps: name=php state=present
-    - name: install php-mysql
-      xbps: name=php-mysql state=present
-    - name: install curl
-      xbps: name=curl state=present
-    - name: install unbound
-      xbps: name=unbound state=present
-    - name: install cronie
-      xbps: name=cronie state=present
-    - name: fix php.ini
-    - lineinfile:
-        path: /etc/php/php.ini
-        regex: '^;?open_basedir'
-        line: 'open_basedir = /'
-    - lineinfile:
-        path: /etc/php/php.ini
-        regex: '^;?extension=phar\.so'
-        line: 'extension=phar.so'
-    - lineinfile:
-        path: /etc/php/php.ini
-        regex: '^;?date.timezone='
-        line: 'date.timezone={{ timezone }}'
-    - lineinfile:
-        path: /etc/php/php.ini
-        regex: '^;?extension=pdo_mysql\.so'
-        line: 'extension=pdo_mysql.so'
-    - name: install composer
-      shell: curl -O- https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
-    - file:
-        path: /usr/bin/composer
-        mode: a+x
-    - name: enabling unbound service
-      file:
-        state: link
-        path: /etc/sv/unbound
-        dest: /var/service/unbound
-    - name: enabling crond service
-      file:
-        state: link
-        path: /etc/sv/crond
-        dest: /var/service/crond
-    - file: path=/opt/hebi state=directory
-    - git: repo="https://github.com/odangomoe/Hebi.git" dest="/opt/hebi" clone=yes update=yes
-      notify: hebi update
-    - file: path=/opt/hebi-neko state=directory
-    - git: repo="https://github.com/odangomoe/Hebi-Neko.git" dest="/opt/hebi-neko" clone=yes update=yes
-      notify: hebi neko update
-    - file: path=/opt/hebi-baka state=directory
-    - git: repo="https://github.com/odangomoe/Hebi-Baka.git" dest="/opt/hebi-baka" clone=yes update=yes
-      notify: hebi baka update
-    - cron: special_time=daily job="PATH=/usr/bin /opt/hebi/bin/hebi anidb" name="update anidb"
-    - cron: minute=30 job="PATH=/usr/bin /opt/hebi/bin/hebi nyaa" name="update nyaa"
-    - cron: minute=0 job="PATH=/usr/bin /opt/hebi-neko/run.sh 96 4513 {{ ipv6_prefix }}" name="crawl nyaa"
-    - cron: minute=0 job="PATH=/usr/bin /bin/node /opt/hebi-baka/index.js" name="update torrent status"
+  - xbps: upgrade=yes
+  - name: install nodejs
+    xbps: name=nodejs state=present
+  - name: install php
+    xbps: name=php state=present
+  - name: install php-mysql
+    xbps: name=php-mysql state=present
+  - name: install curl
+    xbps: name=curl state=present
+  - name: install unbound
+    xbps: name=unbound state=present
+  - name: install cronie
+    xbps: name=cronie state=present
+  - name: fix php.ini
+    lineinfile:
+      path: /etc/php/php.ini
+      regex: '^;?open_basedir'
+      line: 'open_basedir = /'
+  - lineinfile:
+      path: /etc/php/php.ini
+      regex: '^;?extension=phar\.so'
+      line: 'extension=phar.so'
+  - lineinfile:
+      path: /etc/php/php.ini
+      regex: '^;?date.timezone='
+      line: 'date.timezone={{ timezone }}'
+  - lineinfile:
+      path: /etc/php/php.ini
+      regex: '^;?extension=pdo_mysql\.so'
+      line: 'extension=pdo_mysql.so'
+  - name: install composer
+    shell: curl -O- https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+  - file:
+      path: /usr/bin/composer
+      mode: a+x
+  - name: enabling unbound service
+    file:
+      state: link
+      path: /etc/sv/unbound
+      dest: /var/service/unbound
+  - name: enabling crond service
+    file:
+      state: link
+      path: /etc/sv/crond
+      dest: /var/service/crond
+  - file: path=/opt/hebi state=directory
+  - git: repo="https://github.com/odangomoe/Hebi.git" dest="/opt/hebi" clone=yes update=yes
+    notify: hebi update
+  - file: path=/opt/hebi-neko state=directory
+  - git: repo="https://github.com/odangomoe/Hebi-Neko.git" dest="/opt/hebi-neko" clone=yes update=yes
+    notify: hebi neko update
+  - file: path=/opt/hebi-baka state=directory
+  - git: repo="https://github.com/odangomoe/Hebi-Baka.git" dest="/opt/hebi-baka" clone=yes update=yes
+    notify: hebi baka update
+  - cron: special_time=daily job="PATH=/usr/bin /opt/hebi/bin/hebi anidb" name="update anidb"
+  - cron: minute=30 job="PATH=/usr/bin /opt/hebi/bin/hebi nyaa" name="update nyaa"
+  - cron: minute=0 job="PATH=/usr/bin /opt/hebi-neko/run.sh 96 4513 {{ ipv6_prefix }}" name="crawl nyaa"
+  - cron: minute=0 job="PATH=/usr/bin /bin/node /opt/hebi-baka/index.js" name="update torrent status"
 
   handlers:
-    - name: hebi update
-      block:
-        - composer: working_dir=/opt/hebi command=install
-        - shell: cd /opt/hebi && /opt/hebi/vendor/bin/propel migration:diff && /opt/hebi/vendor/bin/propel migration:up;
-    - name: hebi neko update
-      npm: path=/opt/hebi-neko state=latest
-    - name: hebi baka update
-      npm: path=/opt/hebi-baka state=latest
+  - name: hebi update composer
+    composer: working_dir=/opt/hebi command=install
+    listen: "hebi update"
+  - name: hebi migrate database
+    shell: cd /opt/hebi && /opt/hebi/vendor/bin/propel migration:diff && /opt/hebi/vendor/bin/propel migration:up;
+    listen: "hebi update"
+  - name: hebi neko update
+    npm: path=/opt/hebi-neko state=latest
+  - name: hebi baka update
+    npm: path=/opt/hebi-baka state=latest

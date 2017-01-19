@@ -1,0 +1,3 @@
+[submodule "modules/xbps"]
+	path = modules/xbps
+	url = https://github.com/dinoocch/ansible_xbps.git
