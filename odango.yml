@@ -1,7 +1,7 @@
 ---
 - hosts: localhost
   vars:
-    ipv6_prefix: '2a01:7c8:c020:2::3:'
+    ipv6_prefix: '2a01:7c8:c020:2::3'
     timezone: 'Europe/Amsterdam'
 
   become: true
@@ -93,5 +93,7 @@
     listen: "hebi update"
   - name: hebi neko update
     npm: path=/opt/hebi-neko state=latest
+    listen: "hebi neko update"
   - name: hebi baka update
     npm: path=/opt/hebi-baka state=latest
+    listen: "hebi baka update"
