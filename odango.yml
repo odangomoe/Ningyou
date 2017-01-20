@@ -80,9 +80,9 @@
   - git: repo="https://github.com/odangomoe/Hebi-Baka.git" dest="/opt/hebi-baka" clone=yes update=yes
     notify: hebi baka update
   - cron: special_time=daily job="PATH=/usr/bin /opt/hebi/bin/hebi anidb" name="update anidb"
-  - cron: minute=30 job="PATH=/usr/bin /opt/hebi/bin/hebi nyaa" name="update nyaa"
-  - cron: minute=0 job="PATH=/usr/bin /opt/hebi-neko/run.sh 96 4513 {{ ipv6_prefix }}" name="crawl nyaa"
-  - cron: minute=0 job="PATH=/usr/bin /bin/node /opt/hebi-baka/index.js" name="update torrent status"
+  - cron: minute=30 job="PATH=/usr/bin /bin/flock -nE0 /run/hebi.neko.lock /opt/hebi/bin/hebi nyaa" name="update nyaa"
+  - cron: minute=0 job="PATH=/usr/bin /bin/flock -nE0 /run/hebi.neko.lock /opt/hebi-neko/run.sh 96 4513 {{ ipv6_prefix }}" name="crawl nyaa"
+  - cron: minute=0 job="PATH=/usr/bin /bin/flock -nE0 /run/hebi.baka.lock /bin/node /opt/hebi-baka/index.js" name="update torrent status"
 
   handlers:
   - name: hebi update composer
